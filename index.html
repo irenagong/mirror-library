@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mirror Library</title>
+<link rel="icon" href="ml-favicon.png" type="image/x-icon" />
+<style>
+  body {
+    font-family: 'Open Sans', sans-serif;
+    background: linear-gradient(135deg, #f9f9f2, #fafaf0);
+    color: #3a3a3a;
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 1rem 1.5rem;
+    box-sizing: border-box;
+  }
+  h1 {
+    font-weight: 700;
+    font-size: 2.8rem;
+    color: #556b2f;
+    margin-bottom: 0.3rem;
+    text-align: center;
+  }
+  h2.section-title {
+    font-weight: 600;
+    font-size: 1.8rem;
+    color: #556b2f;
+    margin-top: 2rem;
+    margin-bottom: 0.6rem;
+    border-bottom: 2px solid #c3d084;
+    padding-bottom: 0.25rem;
+  }
+  p.welcome {
+    font-style: italic;
+    color: #7a7a50;
+    text-align: center;
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+  }
+  input[type="text"], button {
+    font-size: 1.1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1.5px solid #aab48f;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+    font-family: inherit;
+    color: #3a3a3a;
+  }
+  button {
+    background-color: #556b2f;
+    color: white;
+    cursor: pointer;
+    border: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+  button:hover,
+  button:focus {
+    background-color: #43521d;
+    outline: none;
+  }
+  #curated-toggle {
+    display: inline-block;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    color: #556b2f;
+    font-weight: 600;
+    user-select: none;
+    font-size: 0.95rem;
+  }
+  #curated-toggle:hover,
+  #curated-toggle:focus {
+    text-decoration: underline;
+  }
+
+  /* Smooth toggle with max-height transition */
+  #curated-section {
+    max-height: 1000px; /* enough to show content */
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.5s ease, margin 0.5s ease;
+  }
+  #curated-section.hidden {
+    max-height: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  #curated-reflections {
+    margin-bottom: 1rem;
+  }
+  #curated-reflections p {
+    margin: 1.1rem 0;
+    font-size: 1.15rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  #curated-empty {
+    font-style: italic;
+    color: #999;
+    font-size: 1rem;
+  }
+  /* Suggestion chips styling */
+  #quick-suggestions {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    position: relative;
+  }
+  .suggestion-chip {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 600;
+    min-width: 60px;
+    max-width: 160px;
+    width: auto;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 20px;
+    background-color: #c3d084;
+    border: none;
+    color: #556b2f;
+    cursor: pointer;
+    user-select: none;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-align: center;
+  }
+  .suggestion-chip:hover,
+  .suggestion-chip:focus {
+    background-color: #a8b96c;
+    outline: none;
+    transform: scale(1.05);
+  }
+  #quick-suggestions::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 3rem;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(to right, rgba(250, 250, 240, 0), #fafaf0);
+    transition: opacity 0.3s ease;
+  }
+  #quick-suggestions.scrolled-end::after {
+    opacity: 0;
+  }
+  #quick-suggestions::-webkit-scrollbar {
+    height: 6px;
+  }
+  #quick-suggestions::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #quick-suggestions::-webkit-scrollbar-thumb {
+    background-color: #c3d084;
+    border-radius: 3px;
+  }
+  #helper-text {
+    font-size: 0.9rem;
+    color: #7a7a50;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+  #ai-reflection {
+    font-style: italic;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    color: #4b4b4b;
+    margin-top: 1rem;
+    padding: 1rem 1.2rem;     /* added some padding for comfort */
+    border-left: 5px solid #c3d084;
+    background-color: #fafaf0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(150,150,100,0.1);
+    max-height: 300px;       /* limit max height */
+    overflow-y: auto;        /* add vertical scrollbar when needed */
+    font-size: 1.15rem;
+  }
+
+  a.custom-link {
+    color: #556b2f;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 1.1rem;
+  }
+  a.custom-link:hover,
+  a.custom-link:focus {
+    text-decoration: underline;
+  }
+  button#reflect-btn {
+    width: 100%;
+    max-width: 240px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+  }
+  @media(min-width: 480px) {
+    button#reflect-btn {
+      width: auto;
+      padding: 0.75rem 2rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <h1>🌿 Mirror Library</h1>
+  <p class="welcome">A gentle place for your heart’s questions and reflections.</p>
+  <div id="helper-text">Try typing a feeling or concept, or click a suggestion below.</div>
+  <div id="quick-suggestions" aria-label="Suggested topics" role="list"></div>
+  <input type="text" id="user-question" placeholder="Enter your question or thought here..." />
+  <button id="reflect-btn">Reflect</button>
+
+  <div>
+    <label id="curated-toggle" tabindex="0" role="button" aria-pressed="true">Hide curated reflections ▲</label>
+  </div>
+  <section id="curated-section">
+    <h2 class="section-title">Your curated reflections</h2>
+    <div id="curated-reflections">
+      <p id="curated-empty">Your curated reflections will appear here.</p>
+    </div>
+  </section>
+
+  <div class="poem-separator"></div>
+
+  <section>
+    <h2 class="section-title">AI Reflection</h2>
+    <div id="ai-reflection">AI-generated reflection will appear here after you submit.</div>
+  </section>
+
+<script>
+  const themes = [
+    { name: "Trust", keywords: ["trust", "listen", "confidence", "faith"] },
+    { name: "Courage", keywords: ["courage", "strength", "vulnerability", "bravery"] },
+    { name: "Peace", keywords: ["peace", "calm", "quiet", "stillness", "serenity"] },
+    { name: "Forgiveness", keywords: ["forgiveness", "release", "freedom", "healing"] },
+    { name: "Gratitude", keywords: ["gratitude", "thankful", "appreciation", "blessings"] },
+    { name: "Growth", keywords: ["growth", "change", "hope", "transformation", "learning"] },
+    { name: "Joy", keywords: ["joy", "happiness", "delight", "contentment"] },
+    { name: "Compassion", keywords: ["compassion", "empathy", "kindness", "care"] },
+    { name: "Resilience", keywords: ["resilience", "strength", "perseverance", "endurance"] },
+    { name: "Mindfulness", keywords: ["mindfulness", "presence", "awareness", "now"] },
+    { name: "Love", keywords: ["love", "unconditional", "heart", "connection"] },
+    { name: "Hope", keywords: ["hope", "faith", "future", "belief"] }
+  ];
+
+  const reflections = [
+  {
+    id: "r001",
+    theme: "Trust",
+    text: "Trust begins in the quiet spaces where we listen to ourselves.",
+    keywords: ["trust"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r002",
+    theme: "Courage",
+    text: "Courage grows in the gentle moments of vulnerability.",
+    keywords: ["courage"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r003",
+    theme: "Peace",
+    text: "Peace is not absence of noise but presence of calm.",
+    keywords: ["peace"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r004",
+    theme: "Forgiveness",
+    text: "Forgiveness is a gift I give myself, freeing my heart from old weights.",
+    keywords: ["forgiveness"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r005",
+    theme: "Gratitude",
+    text: "Gratitude turns what we have into enough, filling the soul’s cup.",
+    keywords: ["gratitude"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r006",
+    theme: "Growth",
+    text: "Growth is the gentle unfolding of our true selves through change and patience.",
+    keywords: ["growth", "change", "hope", "transformation", "learning"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r007",
+    theme: "Joy",
+    text: "Joy blossoms quietly in the little moments when we choose to notice and celebrate.",
+    keywords: ["joy", "happiness", "delight", "contentment"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r008",
+    theme: "Compassion",
+    text: "Compassion is the soft bridge that connects hearts with kindness and understanding.",
+    keywords: ["compassion", "empathy", "kindness", "care"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r009",
+    theme: "Resilience",
+    text: "Resilience is the quiet strength that carries us through storms.",
+    keywords: ["resilience", "strength", "perseverance", "endurance"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r010",
+    theme: "Mindfulness",
+    text: "Mindfulness invites us home to the present moment, where peace and awareness reside.",
+    keywords: ["mindfulness", "presence", "awareness", "now"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r011",
+    theme: "Love",
+    text: "Love flows freely when we let go of need and open the heart fully.",
+    keywords: ["love"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  },
+  {
+    id: "r012",
+    theme: "Hope",
+    text: "Hope is the gentle flame that flickers even in darkest nights.",
+    keywords: ["hope"],
+    author: "Mirror Library Team",
+    language: "en",
+    dateCreated: "2025-07-19",
+    source: "original"
+  }
+];
+
+  const themesGrid = document.getElementById('quick-suggestions');
+  const reflectBtn = document.getElementById('reflect-btn');
+  const questionInput = document.getElementById('user-question');
+  const curatedDiv = document.getElementById('curated-reflections');
+  const curatedEmpty = document.getElementById('curated-empty');
+  const aiDiv = document.getElementById('ai-reflection');
+  const curatedToggle = document.getElementById('curated-toggle');
+  const curatedSection = document.getElementById('curated-section');
+
+  // Populate theme buttons dynamically
+  themesGrid.innerHTML = '';
+  themes.forEach(theme => {
+    const btn = document.createElement('button');
+    btn.textContent = theme.name;
+    btn.type = 'button';
+    btn.className = 'suggestion-chip';
+    btn.title = theme.name;
+    btn.addEventListener('click', () => {
+      questionInput.value = theme.keywords[0];
+      reflectBtn.click();
+    });
+    themesGrid.appendChild(btn);
+  });
+
+  // Toggle curated reflections visibility with smooth transition
+  curatedToggle.addEventListener('click', () => {
+    const isHidden = curatedSection.classList.toggle('hidden');
+    curatedToggle.textContent = isHidden ? 'Show curated reflections ▼' : 'Hide curated reflections ▲';
+    curatedToggle.setAttribute('aria-pressed', !isHidden);
+  });
+
+  // Allow toggle via keyboard (Enter, Space)
+  curatedToggle.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      curatedToggle.click();
+    }
+  });
+
+  reflectBtn.addEventListener('click', async () => {
+    const query = questionInput.value.trim().toLowerCase();
+    curatedDiv.innerHTML = '';
+    aiDiv.textContent = '';
+
+    if (!query) {
+      curatedDiv.innerHTML = "<p>Please enter a question or thought.</p>";
+      return;
+    }
+
+    // Show curated reflections as paragraphs (like poems)
+    const matched = reflections.filter(r =>
+      r.keywords.some(k => query.includes(k))
+    );
+
+    if (matched.length === 0) {
+      curatedEmpty.textContent = "No matching curated reflections found. Try exploring themes or AI reflections.";
+      curatedEmpty.style.display = 'block';
+    } else {
+      curatedEmpty.style.display = 'none';
+      curatedDiv.innerHTML = matched.map(r => `<p>${r.text}</p>`).join('');
+    }
+
+    // Show loading for AI reflection
+    aiDiv.textContent = 'Loading AI reflection...';
+
+    try {
+      const response = await fetch('http://localhost:3000/reflect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: query })
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      const data = await response.json();
+      aiDiv.textContent = data.reflection || 'No AI reflection available.';
+    } catch (error) {
+      aiDiv.textContent = 'AI reflection is temporarily unavailable. Please try again later.';
+      console.error('AI reflection error:', error);
+    }
+  });
+</script>
+</body>
+</html>
