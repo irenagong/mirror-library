@@ -449,7 +449,7 @@
     aiDiv.textContent = 'Loading AI reflection...';
 
     try {
-      const response = await fetch('http://localhost:3000/reflect', {
+      const response = await fetch('https://mirror-library-backend-374996d0314d.herokuapp.com/reflect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query })
